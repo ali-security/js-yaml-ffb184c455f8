@@ -48,6 +48,20 @@ describe('dist bundles - maxTotalMergeKeys', function () {
     assert.strictEqual(Object.keys(chain.b).length, 20);
   });
 
+  // Empty merge sources fold no keys but must still be charged against the cap
+  // in the shipped bundles, one unit per source mapping.
+  it('dist bundles charge empty merge sources against maxTotalMergeKeys', function () {
+    var src = 'arr: &arr [{}, {}, {}]\nb: { <<: *arr }\n';
+
+    [ umd, min ].forEach(function (bundle) {
+      assert.throws(function () {
+        bundle.load(src, { maxTotalMergeKeys: 2 });
+      }, /merge keys exceeded maxTotalMergeKeys/);
+
+      assert.deepStrictEqual(bundle.load(src, { maxTotalMergeKeys: 3 }).b, {});
+    });
+  });
+
   it('dist/js-yaml.mjs carries the merge-key cap', function () {
     var src = fs.readFileSync(path.resolve(__dirname, '../../dist/js-yaml.mjs'), 'utf8');
 
